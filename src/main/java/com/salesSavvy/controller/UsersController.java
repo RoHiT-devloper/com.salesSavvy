@@ -5,8 +5,8 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import com.salesSavvy.DTO.SignInResponse;
 import com.salesSavvy.entity.Users;
+import com.salesSavvy.dto.SignInResponse;
 import com.salesSavvy.entity.Product;
 import com.salesSavvy.service.UsersService;
 import com.salesSavvy.service.ProductService;

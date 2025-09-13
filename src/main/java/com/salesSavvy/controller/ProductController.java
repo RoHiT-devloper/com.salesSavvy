@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,6 +16,7 @@ import com.salesSavvy.entity.Cart;
 import com.salesSavvy.entity.CartData;
 import com.salesSavvy.entity.Product;
 import com.salesSavvy.entity.Users;
+import com.salesSavvy.service.CartService;
 import com.salesSavvy.service.ProductService;
 import com.salesSavvy.service.UsersService;
 
@@ -27,6 +29,9 @@ public class ProductController {
 	@Autowired
 	UsersService uService;
 	
+	@Autowired
+	CartService cService;
+	
 //	@Autowired
 //	Cart cart;
 //	
@@ -35,10 +40,13 @@ public class ProductController {
 		return service.addProduct(product);
 	}
 	
-	@GetMapping("/searchProduct")
-	public Product searchProduct(@RequestParam long id) {
-		return service.searchProduct(id);
-	}
+    @GetMapping("/searchProduct")
+    public ResponseEntity<?> searchProduct(@RequestParam long id) {
+        // The service might throw ProductNotFoundException
+        // but we don't need to catch it here thanks to the global handler
+        Product product = service.searchProduct(id);
+        return ResponseEntity.ok(product);
+    }
 	
 //	@GetMapping("/searchProduct")
 //	public Product searchProduct(@RequestParam String name) {
@@ -60,9 +68,45 @@ public class ProductController {
 		return service.getAllProducts();
 	}	
 	
+//	@PostMapping("/addToCart")
+//	public String addToCart(@RequestBody CartData data) {
+//		System.out.println(data);
+//	    Users user = uService.getUser(data.getUsername());
+//	    Product product = service.searchProduct(data.getProductId());
+//
+//	    if (user == null || product == null) {
+//	        return "User or product not found";
+//	    }
+//
+//	    Cart cart = user.getCart();
+//	    if (cart == null) {
+//	        cart = new Cart();
+//	        cart.setUser(user);
+//	        List<Product> pList = new ArrayList<Product>();
+//	        pList.add(product); 
+//	        cart.setProductList(pList);
+//	   
+//	    } else {
+//	    	cart = user.getCart();
+//	    	cart.getProductList().add(product);
+//	    }
+//	   
+//	    cService.addCart(cart);
+//	    user.setCart(cart);
+//	    // Link product <-> cart
+//	    product.setCart(cart);
+//
+//	    // Save both sides
+//	    service.saveProduct(product);   // ✅ update product.cart_id
+//	    uService.saveUser(user);        // ✅ save cart mapping
+//
+//	    return "Product added to cart successfully!";
+//	}
+	
 	@PostMapping("/addToCart")
 	public String addToCart(@RequestBody CartData data) {
-		System.out.println(data);
+	    System.out.println("Adding to cart: " + data);
+	    
 	    Users user = uService.getUser(data.getUsername());
 	    Product product = service.searchProduct(data.getProductId());
 
@@ -70,6 +114,7 @@ public class ProductController {
 	        return "User or product not found";
 	    }
 
+	    // Get or create the user's cart
 	    Cart cart = user.getCart();
 	    if (cart == null) {
 	        cart = new Cart();
@@ -77,13 +122,11 @@ public class ProductController {
 	        user.setCart(cart);
 	    }
 
-	    // Link product <-> cart
-	    product.setCart(cart);
+	    // Use the new helper method to add the product with quantity
+	    cart.addItem(product, data.getQuantity());
 
-	    // Save both sides
-	    service.saveProduct(product);   // ✅ update product.cart_id
-	    uService.saveUser(user);        // ✅ save cart mapping
-
+	    // Save the user (which will cascade and save the cart and its items)
+	    uService.saveUser(user);
 	    return "Product added to cart successfully!";
 	}
 
