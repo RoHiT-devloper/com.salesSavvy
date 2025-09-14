@@ -1,8 +1,12 @@
 package com.salesSavvy.controller;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.salesSavvy.entity.Users;
@@ -74,4 +78,25 @@ public class UsersController {
     public List<Users> getAllUsers() {
         return service.getAllUsers();
     }
+
+     @GetMapping("/verifyUserRole")
+    public ResponseEntity<Map<String, Object>> verifyUserRole(@RequestParam String username) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            Users user = service.getUser(username);
+            if (user == null) {
+                response.put("success", false);
+                response.put("message", "User not found");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+            
+            response.put("success", true);
+            response.put("role", user.getRole());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error verifying user role");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+}
 }
